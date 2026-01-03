@@ -1,16 +1,42 @@
 using UnityEngine;
 
-public class PlayerIdleState : MonoBehaviour
+public class PlayerIdleState : PlayerBaseState
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public PlayerIdleState(PlayerStateMachine currentContext, PlayerStateFactory playerStateFactory)
+    : base(currentContext, playerStateFactory) { }
+
+    public override void CheckSwitchState()
+    {
+        if(Ctx.IsMovementPressed && Ctx.IsRunPressed)
+        {
+            SwitchState(Factory.Run());
+        }
+        else if(Ctx.IsMovementPressed)
+        {
+            SwitchState(Factory.Walk());
+        }
+    }
+
+    public override void EnterState()
+    {
+        Ctx.PlayerAnimator.SetBool(Ctx.IsWalkingHash, false);
+        Ctx.PlayerAnimator.SetBool(Ctx.IsRunningHash, false);
+        Ctx.AppliedMovementX = 0;
+        Ctx.AppliedMovementZ = 0;
+    }
+
+    public override void ExitState()
     {
         
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void InitializeSubState()
     {
         
+    }
+
+    public override void UpdateState()
+    {
+        CheckSwitchState();
     }
 }
