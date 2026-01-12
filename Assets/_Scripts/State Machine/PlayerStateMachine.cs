@@ -1,3 +1,5 @@
+using System;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,23 +10,29 @@ public class PlayerStateMachine : MonoBehaviour
     PlayerInput _playerInput;
     CharacterController _characterController;
     Animator _playerAnimator;
+    [SerializeField] CinemachineCamera _FPCamera;
 
     //variables to store player input values 
     Vector2 _currentMovementInput;
     Vector2 _currentLookInput;
+    public Vector2 _lookInput;
 
     //Look variables
-    
+    public Vector2 _lookSensitivity = new Vector2 (0.1f, 0.1f);
+    public float _lookLimit = 85f;
+
+    [SerializeField] float _currentLookingAngle = 0f;
 
     //Movement variables
     Vector3 _currentMovement;
     Vector3 _appliedMovement;
+    Vector3 _horizontalMove;
     bool _isMovementPressed;
 
     //Run variables
     Vector3 _currentRunMovement;
     bool _isRunPressed;
-    float _runMultiplier = 3.0f;
+    float _runMultiplier = 4.0f;
 
     //Jump variables
     bool _isJumpPressed = false;
@@ -63,6 +71,7 @@ public class PlayerStateMachine : MonoBehaviour
     public bool RequireNewJumpPress { get { return _requireNewJumpPress; } set { _requireNewJumpPress = value; }}
     public bool IsJumping {  set { _isJumping = value; }}
     public bool IsJumpPressed { get { return _isJumpPressed; }}
+    public float LookAngle { get => _currentLookingAngle; set { _currentLookingAngle = Mathf.Clamp(value, -_lookLimit, _lookLimit); }}
     public float Gravity {  get { return _gravity; }}
     public float GroundedGravity { get { return _groundedGravity; }}
     public float CurrentMovementY { get { return _currentMovement.y; } set { _currentMovement.y = value; } }
@@ -70,16 +79,20 @@ public class PlayerStateMachine : MonoBehaviour
     public float InitialJumpVelocity { get { return _initialJumpVelocity; } }
     public float AppliedMovementX { get { return _appliedMovement.x; } set { _appliedMovement.x = value; }}
     public float AppliedMovementZ { get { return _appliedMovement.z; } set { _appliedMovement.z = value; }}
+    public float HorizontalMoveX { get { return _horizontalMove.x; } set { _horizontalMove.x = value; }}
+    public float HorizontalMoveZ { get { return _horizontalMove.z; }set { _horizontalMove.z = value; }}
     public float RunMultiplier { get { return _runMultiplier; }}
     public Vector2 CurrentMovementInput { get { return _currentMovementInput; }}
 
     #endregion
 
-    private void Awake()
+    protected void Awake()
     {
         _playerInput = new PlayerInput();
         _characterController = GetComponent<CharacterController>();
         _playerAnimator = GetComponent<Animator>();
+
+        Cursor.lockState = CursorLockMode.Locked;
 
         //Setup state
         _states = new PlayerStateFactory(this);
@@ -96,9 +109,7 @@ public class PlayerStateMachine : MonoBehaviour
         _playerInput.CharacterControls.Move.performed += OnMovementInput;
         _playerInput.CharacterControls.Move.canceled += OnMovementInput;
 
-        _playerInput.CharacterControls.Look.started += OnLook;
         _playerInput.CharacterControls.Look.performed += OnLook;
-        _playerInput.CharacterControls.Look.canceled += OnLook;
 
         //Setting up run input
         _playerInput.CharacterControls.Run.started += OnRun;
@@ -120,37 +131,21 @@ public class PlayerStateMachine : MonoBehaviour
 
     void Update()
     {
-        HandleRotation();
+        LookUpdate();
+
+        _horizontalMove = GetCameraRelativeMovement();
+        _appliedMovement.x = _horizontalMove.x;
+        _appliedMovement.z = _horizontalMove.z;
+
         _currentState.UpdateStates();
+
         _characterController.Move(_appliedMovement * Time.deltaTime);
-    }
-
-    void HandleRotation()
-    {
-        Vector3 positionToLookAt;
-
-        positionToLookAt.x = _currentMovement.x;
-        positionToLookAt.y = 0.0f;
-        positionToLookAt.z = _currentMovement.z;
-
-        Quaternion currentRotation = transform.rotation;
-
-        if (_isMovementPressed)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(positionToLookAt);
-            transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, _rotationFactorPerFrame * Time.deltaTime);
-        }
     }
 
     void OnMovementInput(InputAction.CallbackContext context)
     {
         _currentMovementInput = context.ReadValue<Vector2>();
         _isMovementPressed = _currentMovementInput.x != 0 || _currentMovementInput.y != 0;
-    }
-
-    void OnLook(InputAction.CallbackContext context)
-    {
-        _currentLookInput = context.ReadValue<Vector2>();
     }
 
     void OnRun(InputAction.CallbackContext context)
@@ -163,6 +158,38 @@ public class PlayerStateMachine : MonoBehaviour
         _isJumpPressed = context.ReadValueAsButton();
         _requireNewJumpPress = false;
         Debug.Log(_isJumpPressed);
+    }
+
+    Vector3 GetCameraRelativeMovement()
+    {
+        Vector3 camForward = _FPCamera.transform.forward;
+        Vector3 camRight = _FPCamera.transform.right;
+
+        camForward.y = 0;
+        camRight.y = 0;
+
+        camForward.Normalize();
+        camRight.Normalize();
+
+        return camRight * _currentMovementInput.x + camForward * _currentMovementInput.y;
+    }
+
+    void LookUpdate()
+    {
+        Vector2 input = new Vector2(_currentLookInput.x * _lookSensitivity.x, _currentLookInput.y * _lookSensitivity.y);
+
+        LookAngle -= input.y;
+
+        //For camera up and down movement
+        _FPCamera.transform.localRotation = Quaternion.Euler(LookAngle, 0f, 0f);
+
+        //For camera right and left movement
+        transform.Rotate(Vector3.up * input.x);
+    }
+
+    void OnLook(InputAction.CallbackContext context)
+    {
+        _currentLookInput = context.ReadValue<Vector2>();
     }
 
     private void OnEnable()

@@ -65,7 +65,7 @@ public class PlayerJumpState : PlayerBaseState
 
     void HandleGravity()
     {
-        bool isFalling = Ctx.CurrentMovementY <= 0.0f || !Ctx.IsJumpPressed; // you can remove the "|| !isJumpPressed" if you do not want variable jump height 
+        bool isFalling = Ctx.CurrentMovementY <= 0.0f || !Ctx.IsJumpPressed; //you can remove the "|| !isJumpPressed" if you do not want variable jump height 
         float fallMultiplier = 2.0f;
 
         if (isFalling)

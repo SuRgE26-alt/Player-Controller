@@ -36,7 +36,7 @@ public class PlayerRunState : PlayerBaseState
     public override void UpdateState()
     {
         CheckSwitchState();
-        Ctx.AppliedMovementX = Ctx.CurrentMovementInput.x * Ctx.RunMultiplier;
-        Ctx.AppliedMovementZ = Ctx.CurrentMovementInput.y * Ctx.RunMultiplier;
+        Ctx.AppliedMovementX = Ctx.HorizontalMoveX * Ctx.RunMultiplier;
+        Ctx.AppliedMovementZ = Ctx.HorizontalMoveZ * Ctx.RunMultiplier;
     }
 }

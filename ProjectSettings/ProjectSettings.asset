@@ -865,8 +865,8 @@ PlayerSettings:
   editorAssembliesCompatibilityLevel: 1
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: FPS Player Controller
-  metroPackageVersion: 
+  metroPackageName: FPSPlayerController
+  metroPackageVersion: 1.0.0.0
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
@@ -874,7 +874,7 @@ PlayerSettings:
   metroCertificateNotAfter: 0000000000000000
   metroApplicationDescription: FPS Player Controller
   wsaImages: {}
-  metroTileShortName: 
+  metroTileShortName: FPS Player Controller
   metroTileShowName: 0
   metroMediumTileShowName: 0
   metroLargeTileShowName: 0
